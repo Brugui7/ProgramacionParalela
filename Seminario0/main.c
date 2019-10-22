@@ -81,7 +81,7 @@ void sumArrays(){
         }
     }
 
-    printf("Sumando los arrays...\n", size, size);
+    printf("Sumando los arrays...\n");
 
     arrayResult = (int*) malloc(sizeof(int) * size * size);
     for (int i = 0; i < size; ++i) {
@@ -172,7 +172,7 @@ void doJacobi(float *array1, float *array2, int arraySize){
 
 
 /**
- * Asks the user for a size then sums two 1D array of random floats
+ * Asks the user for a size then sums the values of a 1D array of random floats
  */
 void sumFloatArray(){
     int size = 0;
