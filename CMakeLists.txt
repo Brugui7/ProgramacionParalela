@@ -3,4 +3,4 @@ project(ProgramacionParalela C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(ProgramacionParalela main.c)
+add_executable(ProgramacionParalela Seminario0/main.c)
