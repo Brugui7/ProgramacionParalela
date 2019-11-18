@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <omp.h>
+/**
+ * Asks for the number of threads to be used in the function
+ * @return int
+ */
 int getThreadNumber(){
     int threadNumber;
     printf("Introduzca el número de hilos a ejecutar\n >");
@@ -23,6 +27,28 @@ void exercise1(){
     }
 }
 
+void exercise2(){
+    omp_set_num_threads(getThreadNumber());
+    int number = 10;
+    printf("El valor de la variable es %d antes de empezar el framento paralelizado\n---------------------------\n", number);
+    #pragma omp parallel for firstprivate(number)
+        for (int i = 0; i < 3; i++){
+            printf("Soy un hilo, y con la directiva firstPrivate, puedo seguir viendo el valor inicial de la variable: %d\n"
+                   "Ahora cambiaré el valor de la variable\n", number++);
+        }
+
+    printf("----------------------------------\n Al final de la parte paralelizada, no se ven las modificaciones hechas a la variable, por lo que el valor continúa como %d\n", number);
+
+    #pragma omp parallel for lastprivate(number)
+        for (int i = 0; i < 3; i++){
+            printf("Soy un hilo, y con la directiva lastPrivate, no puedo seguir viendo el valor inicial de la variable: %d\n"
+                   "Ahora cambiaré el valor de la variable\n", number);
+            number = 0 + i;
+        }
+
+    printf("----------------------------------\n Al final de la parte paralelizada, se ven las modificaciones hechas a la variable, por lo que el valor ahora es %d\n", number);
+
+}
 
 int main() {
     int option = 0;
@@ -48,12 +74,12 @@ int main() {
                 exercise1();
                 break;
             case 2:
-
+                exercise2();
                 break;
             case 3:
                 break;
             case 8:
-                printf("Saliendo...");
+                printf("Saliendo...\n");
                 break;
             default:
                 printf("Por favor seleccione una opción válida\n");
