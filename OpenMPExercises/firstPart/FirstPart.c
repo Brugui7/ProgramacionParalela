@@ -1,5 +1,7 @@
-#include <stdio.h>
 #include <omp.h>
+#include <sys/time.h>
+#include <stdio.h>
+
 /**
  * Asks for the number of threads to be used in the function
  * @return int
@@ -50,6 +52,63 @@ void exercise2(){
 
 }
 
+void exercise3(){
+    //For time measuring
+    struct timeval start, end;
+    double timeInvested;
+
+    int threadNumber = getThreadNumber();
+    int firstArray[1024], secondArray[2048], lastArray[4096];
+    int firstResult = 0, secondResult = 0, lastResult = 0;
+    printf("Rellenando los arrays...\n");
+    for (int i = 0; i < 1024; i++){
+        firstArray[i] = i;
+    }
+    for (int i = 0; i < 2048; i++){
+        secondArray[i] = i;
+    }
+    for (int i = 0; i < 4096; i++){
+        lastArray[i] = i;
+    }
+
+    gettimeofday(&start, NULL);
+    omp_set_num_threads(threadNumber);
+    #pragma omp parallel for reduction(+:firstResult)
+    for (int i = 0; i < 1024; i++){
+        firstResult += firstArray[i];
+    }
+    gettimeofday(&end, NULL);
+    timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                    end.tv_usec - start.tv_usec) / 1.e6;
+    printf("Terminada la suma del vector de 1024 elementos, resultado: %d\n", firstResult);
+    printf("Tiempo invertido: %f\n", timeInvested);
+
+    gettimeofday(&start, NULL);
+    #pragma omp parallel for reduction(+:secondResult)
+    for (int i = 0; i < 2048; i++) {
+        secondResult += secondArray[i];
+    }
+    gettimeofday(&end, NULL);
+    timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                    end.tv_usec - start.tv_usec) / 1.e6;
+    printf("Terminada la suma del vector de 2048 elementos, resultado: %d\n", secondResult);
+    printf("Tiempo invertido: %f\n", timeInvested);
+
+    gettimeofday(&start, NULL);
+    #pragma omp parallel for reduction(+:lastResult)
+    for (int i = 0; i < 4096; i++) {
+        lastResult += lastArray[i];
+    }
+    gettimeofday(&end, NULL);
+    timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                    end.tv_usec - start.tv_usec) / 1.e6;
+    printf("Terminada la suma del vector de 4096 elementos, resultado: %d\n", lastResult);
+    printf("Tiempo invertido: %f\n", timeInvested);
+
+
+}
+
+
 int main() {
     int option = 0;
 
@@ -77,6 +136,7 @@ int main() {
                 exercise2();
                 break;
             case 3:
+                exercise3();
                 break;
             case 8:
                 printf("Saliendo...\n");
