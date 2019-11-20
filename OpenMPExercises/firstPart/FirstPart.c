@@ -348,6 +348,19 @@ void exercise5(){
 }
 
 
+void exercise6(){
+    omp_set_num_threads(getThreadNumber());
+    #pragma omp parallel
+    {
+        #pragma omp master
+        {
+            printf("Soy el hilo maestro y mi id es el: %d\n", omp_get_thread_num());
+        }
+        #pragma omp barrier
+        printf("Soy el hilo %d\n", omp_get_thread_num());
+    };
+}
+
 int main() {
     int option = 0;
 
@@ -384,7 +397,7 @@ int main() {
                 exercise5();
                 break;
             case 6:
-                //exercise3();
+                exercise6();
                 break;
             case 8:
                 printf("Saliendo...\n");
