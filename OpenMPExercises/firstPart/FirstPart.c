@@ -1,3 +1,5 @@
+
+
 #include <omp.h>
 #include <sys/time.h>
 #include <stdio.h>
@@ -361,6 +363,34 @@ void exercise6(){
     };
 }
 
+void exercise7(){
+    //For time measuring
+    struct timeval start, end;
+    double timeInvested;
+
+    int threads = getThreadNumber();
+
+    static long num_steps = 100000000;
+    double step;
+    int i; double x, pi, sum = 0.0;
+    step = 1.0/(double) num_steps;
+    gettimeofday(&start, NULL);
+    omp_set_num_threads(threads);
+    #pragma omp parallel for reduction(+:sum) private(x) firstprivate(step)
+    for(i = 1; i <= num_steps; i++){
+        x = (i - 0.5) * step;
+        sum = sum + 4.0/(1.0 + x * x);
+    }
+    pi = step * sum;
+    printf("\nResultado: %f\n", pi);
+
+    gettimeofday(&end, NULL);
+    timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                    end.tv_usec - start.tv_usec) / 1.e6;
+    printf("Tiempo invertido: %f\n", timeInvested);
+
+}
+
 int main() {
     int option = 0;
 
@@ -398,6 +428,9 @@ int main() {
                 break;
             case 6:
                 exercise6();
+                break;
+            case 7:
+                exercise7();
                 break;
             case 8:
                 printf("Saliendo...\n");
