@@ -5,4 +5,4 @@ find_package(OpenMP)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(ProgramacionParalela OpenMPExercises/firstPart/FirstPart.c)
+add_executable(ProgramacionParalela OpenMPExercises/firstPart/FirstPart.c OpenMPExercises/firstPart/SecondPart.c)
