@@ -73,7 +73,89 @@ void exercise1(){
 
 void exercise2(){
 
+    //For time measuring
+    struct timeval start, end;
+    double timeInvested;
+    int size = 1073741824;
 
+    double *x1, *x2, *x3;
+    double y1 = 0.0f, y2 = 0.0f , y3 = 0.0f;
+    x1 = (double*) malloc(sizeof(double) * size);
+    x2 = (double*) malloc(sizeof(double) * size);
+    x3 = (double*) malloc(sizeof(double) * size);
+
+    int j = 0;
+
+    printf("Rellenando arrays de tamaño %d...\n", size);
+
+    for( int i = 0; i < size; i++){
+        x1[i] = 1.0f;
+        x2[i] = 1.0f;
+        x3[i] = 1.0f;
+    }
+
+    printf("------------------------------------------\n"
+           "Planificación estática"
+           "\n------------------------------------------");
+    for (int i = 2; i < 10; i += 2) {
+        gettimeofday(&start, NULL);
+
+        omp_set_num_threads(i);
+        printf("\nNúmero de hilos: %d", i);
+
+        #pragma omp parallel for schedule(static) reduction(+:y1)
+        for (j = 0; j < size; j++) {
+            y1 += x1[j];
+        }
+
+        gettimeofday(&end, NULL);
+        timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                        end.tv_usec - start.tv_usec) / 1.e6;
+        printf("\tTiempo invertido: %f", timeInvested);
+    }
+
+    printf("\n------------------------------------------\n"
+           "Planificación dinámica"
+           "\n------------------------------------------");
+    for (int i = 2; i < 10; i += 2) {
+        gettimeofday(&start, NULL);
+
+        omp_set_num_threads(i);
+        printf("\nNúmero de hilos: %d", i);
+        #pragma omp parallel for schedule(dynamic) reduction(+:y2)
+        for (j = 0; j < size; j++) {
+            y2 += x2[j];
+        }
+
+        gettimeofday(&end, NULL);
+        timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                        end.tv_usec - start.tv_usec) / 1.e6;
+        printf("\tTiempo invertido: %f", timeInvested);
+    }
+
+    printf("\n------------------------------------------\n"
+           "Planificación guiada"
+           "\n------------------------------------------");
+    for (int i = 2; i < 10; i += 2) {
+        gettimeofday(&start, NULL);
+
+        omp_set_num_threads(i);
+        printf("\nNúmero de hilos: %d", i);
+        #pragma omp parallel for schedule(guided)
+        for (j = 0; j < 4096; j++) {
+            y3 += x3[j];
+        }
+
+        gettimeofday(&end, NULL);
+        timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                        end.tv_usec - start.tv_usec) / 1.e6;
+        printf("\tTiempo invertido: %f", timeInvested);
+    }
+
+
+    free(x1);
+    free(x2);
+    free(x3);
 }
 
 void exercise3(){
