@@ -58,10 +58,10 @@ void exercise1(){
     #pragma omp parallel sections
     {
         #pragma omp section
-        exercise1Function1();
+        { exercise1Function1(); }
 
         #pragma omp section
-        exercise1Function2();
+        {exercise1Function2(); }
 
     };
 
@@ -142,7 +142,7 @@ void exercise2(){
         omp_set_num_threads(i);
         printf("\nNúmero de hilos: %d", i);
         #pragma omp parallel for schedule(guided)
-        for (j = 0; j < 4096; j++) {
+        for (j = 0; j < size; j++) {
             y3 += x3[j];
         }
 
@@ -160,7 +160,184 @@ void exercise2(){
 
 void exercise3(){
 
+    //For time measuring
+    struct timeval start, end;
+    double timeInvested;
 
+    double *x1, *x2, *x3;
+    double y1 = 0.0f, y2 = 0.0f , y3 = 0.0f;
+    x1 = (double*) malloc(sizeof(double) * 3000);
+    x2 = (double*) malloc(sizeof(double) * 4000);
+    x3 = (double*) malloc(sizeof(double) * 5000);
+
+    int j = 0;
+
+    printf("Rellenando arrays...\n");
+
+    for(int i = 0; i < 3000; i++){
+        x1[i] = 2.0f;
+    }
+
+    for(int i = 0; i < 4000; i++){
+        x2[i] = 2.0f;
+    }
+
+    for(int i = 0; i < 5000; i++){
+        x3[i] = 2.0f;
+    }
+
+    printf("\n\n\n******************************************\n"
+           "USO DE REDUCTION"
+           "\n******************************************\n");
+
+    printf("------------------------------------------\n"
+           "Array de tamaño 3000"
+           "\n------------------------------------------");
+    for (int i = 2; i < 10; i += 2) {
+        y1 = 0;
+        gettimeofday(&start, NULL);
+
+        omp_set_num_threads(i);
+        printf("\nNúmero de hilos: %d", i);
+
+        #pragma omp parallel for reduction(+:y1)
+        for (j = 0; j < 3000; j++) {
+            y1 += x1[j] * x1[j];
+        }
+
+        gettimeofday(&end, NULL);
+        timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                        end.tv_usec - start.tv_usec) / 1.e6;
+        printf("\tTiempo invertido: %f\t Resultado: %f", timeInvested, y1);
+    }
+
+    printf("\n------------------------------------------\n"
+           "Array de tamaño 4000"
+           "\n------------------------------------------");
+    for (int i = 2; i < 10; i += 2) {
+        y2 = 0;
+        gettimeofday(&start, NULL);
+
+        omp_set_num_threads(i);
+        printf("\nNúmero de hilos: %d", i);
+        #pragma omp parallel for reduction(+:y2)
+        for (j = 0; j < 4000; j++) {
+            y2 += x2[j] * x2[j];
+        }
+
+        gettimeofday(&end, NULL);
+        timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                        end.tv_usec - start.tv_usec) / 1.e6;
+        printf("\tTiempo invertido: %f\t Resultado: %f", timeInvested, y2);
+    }
+
+    printf("\n------------------------------------------\n"
+           "Array de tamaño 5000"
+           "\n------------------------------------------");
+    for (int i = 2; i < 10; i += 2) {
+        y3 = 0;
+        gettimeofday(&start, NULL);
+
+        omp_set_num_threads(i);
+        printf("\nNúmero de hilos: %d", i);
+        #pragma omp parallel for reduction(+:y3)
+        for (j = 0; j < 5000; j++) {
+            y3 += x3[j] * x3[j];
+        }
+
+        gettimeofday(&end, NULL);
+        timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                        end.tv_usec - start.tv_usec) / 1.e6;
+        printf("\tTiempo invertido: %f\t Resultado: %f", timeInvested, y3);
+    }
+
+
+    printf("\n\n\n******************************************\n"
+           "USO DE CRITICAL"
+           "\n******************************************\n");
+
+    printf("------------------------------------------\n"
+           "Array de tamaño 3000"
+           "\n------------------------------------------");
+    for (int i = 2; i < 10; i += 2) {
+        gettimeofday(&start, NULL);
+
+        omp_set_num_threads(i);
+        printf("\nNúmero de hilos: %d", i);
+
+        #pragma omp parallel shared(x1) private(j)
+        {
+            #pragma omp critical (section1)
+            {
+                y1 = 0;
+                for (j = 0; j < 3000; j++) {
+                    y1 += x1[j] * x1[j];
+                }
+            }
+        }
+
+
+        gettimeofday(&end, NULL);
+        timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                        end.tv_usec - start.tv_usec) / 1.e6;
+        printf("\tTiempo invertido: %f\t Resultado: %f", timeInvested, y1);
+    }
+
+    printf("\n------------------------------------------\n"
+           "Array de tamaño 4000"
+           "\n------------------------------------------");
+    for (int i = 2; i < 10; i += 2) {
+        gettimeofday(&start, NULL);
+
+        omp_set_num_threads(i);
+        printf("\nNúmero de hilos: %d", i);
+        #pragma omp parallel shared(x2)
+        {
+            #pragma omp critical (section1)
+            {
+                y2 = 0;
+                for (j = 0; j < 4000; j++) {
+                    y2 += x2[j] * x2[j];
+                }
+            }
+
+        }
+
+        gettimeofday(&end, NULL);
+        timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                        end.tv_usec - start.tv_usec) / 1.e6;
+        printf("\tTiempo invertido: %f\t Resultado: %f", timeInvested, y2);
+    }
+
+    printf("\n------------------------------------------\n"
+           "Array de tamaño 5000"
+           "\n------------------------------------------");
+    for (int i = 2; i < 10; i += 2) {
+        gettimeofday(&start, NULL);
+
+        omp_set_num_threads(i);
+        printf("\nNúmero de hilos: %d", i);
+        #pragma omp parallel shared(x3)
+        {
+            #pragma omp critical (section1)
+            {
+                y3 = 0;
+                for (j = 0; j < 5000; j++) {
+                    y3 += x3[j] * x3[j];
+                }
+            }
+        }
+
+        gettimeofday(&end, NULL);
+        timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                        end.tv_usec - start.tv_usec) / 1.e6;
+        printf("\tTiempo invertido: %f\t Resultado: %f", timeInvested, y3);
+    }
+
+
+    free(x1);
+    free(x2);
+    free(x3);
 }
 
 void exercise4(){
