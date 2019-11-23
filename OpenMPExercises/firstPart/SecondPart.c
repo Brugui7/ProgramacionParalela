@@ -378,7 +378,143 @@ void exercise4(){
 }
 
 void exercise5(){
+    //For time measuring
+    struct timeval start, end;
+    double timeInvested;
 
+    double **x1, **x2, **x3;
+    double *y1, *y2, *y3;
+    double *z1, *z2, *z3;
+    x1 = (double**) malloc(sizeof(double) * 3000);
+    x2 = (double**) malloc(sizeof(double) * 4000);
+    x3 = (double**) malloc(sizeof(double) * 5000);
+    y1 = (double*) malloc(sizeof(double) * 3000);
+    y2 = (double*) malloc(sizeof(double) * 4000);
+    y3 = (double*) malloc(sizeof(double) * 5000);
+    z1 = (double*) malloc(sizeof(double) * 3000);
+    z2 = (double*) malloc(sizeof(double) * 4000);
+    z3 = (double*) malloc(sizeof(double) * 5000);
+
+    int j = 0;
+
+    printf("Rellenando arrays...\n");
+
+    for(int i = 0; i < 3000; i++){
+        x1[i] = (double*) malloc(sizeof(double) * 3000);
+        y1[i] = 3.0f;
+        z1[i] = 0;
+        for (j = 0; j < 3000; ++j) {
+            x1[i][j] = 2.0f;
+        }
+    }
+
+    for(int i = 0; i < 4000; i++){
+        x2[i] = (double*) malloc(sizeof(double) * 4000);
+        y2[i] = 3.0f;
+        z2[i] = 0;
+        for (j = 0; j < 4000; ++j) {
+            x2[i][j] = 2.0f;
+        }
+    }
+
+    for(int i = 0; i < 5000; i++){
+        x3[i] = (double*) malloc(sizeof(double) * 5000);
+        y3[i] = 3.0f;
+        z3[i] = 0;
+        for (j = 0; j < 5000; ++j) {
+            x3[i][j] = 2.0f;
+        }
+    }
+
+    printf("------------------------------------------\n"
+           "Array de tamaño 3000"
+           "\n------------------------------------------");
+    for (int i = 2; i < 10; i += 2) {
+        gettimeofday(&start, NULL);
+        printf("\nNúmero de hilos: %d", i);
+
+        omp_set_num_threads(i);
+        #pragma omp parallel for collapse(2) shared(x1, y1)
+        for (j = 0;j < 3000;j++) {
+            for (int k = 0; k < 3000; ++k) {
+                z1[j] += x1[j][k] * y1[k];
+            }
+        }
+
+        gettimeofday(&end, NULL);
+        timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                        end.tv_usec - start.tv_usec) / 1.e6;
+        printf("\tTiempo invertido: %f\t Resultado en 2999: %f", timeInvested, z1[2999]);
+    }
+
+    printf("\n------------------------------------------\n"
+           "Array de tamaño 4000"
+           "\n------------------------------------------");
+    for (int i = 2; i < 10; i += 2) {
+        gettimeofday(&start, NULL);
+
+        omp_set_num_threads(i);
+        printf("\nNúmero de hilos: %d", i);
+
+        #pragma omp parallel for collapse(2) shared(x2, y2)
+        for (j = 0;j < 4000;j++) {
+            for (int k = 0; k < 4000; ++k) {
+                z2[j] += x2[j][k] * y2[k];
+            }
+        }
+
+        gettimeofday(&end, NULL);
+        timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                        end.tv_usec - start.tv_usec) / 1.e6;
+        printf("\tTiempo invertido: %f\t Resultado en 3999: %f", timeInvested, z2[3999]);
+    }
+
+    printf("\n------------------------------------------\n"
+           "Array de tamaño 5000"
+           "\n------------------------------------------");
+    for (int i = 2; i < 10; i += 2) {
+        gettimeofday(&start, NULL);
+
+        omp_set_num_threads(i);
+
+        printf("\nNúmero de hilos: %d", i);
+
+        #pragma omp parallel for collapse(2) shared(x3, y3)
+        for (j = 0;j < 5000;j++) {
+            for (int k = 0; k < 5000; ++k) {
+                z3[j] += x3[j][k] * y3[k];
+            }
+        }
+
+        gettimeofday(&end, NULL);
+        timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                        end.tv_usec - start.tv_usec) / 1.e6;
+        printf("\tTiempo invertido: %f\t Resultado en 4999: %f", timeInvested, z3[4999]);
+    }
+
+
+
+    for(int i = 0; i < 3000; i++){
+        free(x1[i]);
+    }
+
+    for(int i = 0; i < 4000; i++){
+        free(x2[i]);
+    }
+
+    for(int i = 0; i < 5000; i++){
+        free(x3[i]);
+    }
+
+    free(x1);
+    free(x2);
+    free(x3);
+    free(y1);
+    free(y2);
+    free(y3);
+    free(z1);
+    free(z2);
+    free(z3);
 }
 
 
@@ -423,7 +559,7 @@ int main() {
             case 6:
                 exercise6();
                 break;
-            case 8:
+            case 7:
                 printf("Saliendo...\n");
                 break;
             default:
