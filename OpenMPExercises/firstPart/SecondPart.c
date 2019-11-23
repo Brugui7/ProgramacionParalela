@@ -341,6 +341,39 @@ void exercise3(){
 }
 
 void exercise4(){
+    //For time measuring
+    struct timeval start, end;
+    double timeInvested;
+
+    int threads = getThreadNumber();
+    int size = 0, max, min;
+    printf("Introduzca el tamaño del array\n> ");
+    scanf("%d", &size);
+    fflush(stdin);
+
+    int *array = (int*) malloc(sizeof(int) * size);
+
+    printf("Rellenando el array...\n");
+    for (int i = 0; i < size; ++i) {
+        array[i] = i;
+    }
+    max = min = array[0];
+
+    gettimeofday(&start, NULL);
+
+    #pragma omp parallel for shared(array) lastprivate(max, min) firstprivate(max, min)
+    for (int i = 0; i < size; ++i) {
+        if (array[i] > max) max = array[i];
+        if (array[i] < min) min = array[i];
+
+    }
+    gettimeofday(&end, NULL);
+    timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                    end.tv_usec - start.tv_usec) / 1.e6;
+    printf("\tTiempo invertido: %f\t Máximo: %d\t Mínimo: %d", timeInvested, max, min);
+
+
+
 
 }
 
@@ -356,7 +389,7 @@ void exercise6(){
 int main() {
     int option = 0;
 
-    while (option != 8) {
+    while (option != 7) {
 
         printf("\n\n\n\n############### MENU TEMA 3 PARTE 1 ###############\n"
                "Indique qué acción desea realizar\n"
@@ -366,8 +399,7 @@ int main() {
                "\t4. Ejercicio 4\n"
                "\t5. Ejercicio 5\n"
                "\t6. Ejercicio 6\n"
-               "\t7. Ejercicio 7\n"
-               "\t8. Salir\n");
+               "\t7. Salir\n");
         printf("> ");
 
         scanf("%d", &option);
