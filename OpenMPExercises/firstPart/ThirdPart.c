@@ -220,7 +220,7 @@ void exercise2() {
         for (int j = 0; j < size; j++) {
             sum = 0.0f;
 
-            for (int k = 0; k < size; k++){
+            for (int k = 0; k < size; k++) {
                 position = i * size + k;
                 position2 = k * size + j;
                 sum += array1[position] * array2[position2];
@@ -258,7 +258,7 @@ void exercise2() {
             sum = 0.0f;
 
             #pragma omp parallel for
-            for (k = 0; k < size; k++){
+            for (k = 0; k < size; k++) {
                 position = i * size + k;
                 position2 = k * size + j;
                 sum += array1[position] * array2[position2];
@@ -287,6 +287,71 @@ void exercise3() {
     //For time measuring
     struct timeval start, end;
     double timeInvested;
+
+    int size = 0;
+    int iterations = 0;
+
+    printf("Introduzca el número de iteraciones\n> ");
+    scanf("%d", &iterations);
+    fflush(stdin);
+
+    printf("Introduzca el tamaño de los arrays\n> ");
+    scanf("%d", &size);
+    fflush(stdin);
+
+    //Allocates the memory
+    printf("Rellenando el array de %d X %d...\n", size, size);
+    float *array1 = (float *) malloc(sizeof(float) * size * size);
+    float *array2 = (float *) malloc(sizeof(float) * size * size);
+
+
+    int position = 0;
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < size; ++j) {
+            position = i * size + j;
+            array1[position] = 2.0f;
+        }
+    }
+
+
+    printf("\n--------------------------------------\nAplicando método de manera secuencial\n--------------------------------------\n");
+    gettimeofday(&start, NULL);
+
+    for (int k = 0; k < iterations; k++) {
+        for (int i = 1; i < (size - 1); i++) {
+            for (int j = 1; j < (size - 1); j++) {
+                array2[i * size + j] = array1[(i - 1) * size + j] + array1[(i + 1) * size + j] + array1[i * size + j - 1] + array1[i * size + j + 1];
+            }
+        }
+    }
+
+    gettimeofday(&end, NULL);
+    timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                    end.tv_usec - start.tv_usec) / 1.e6;
+
+    position = (size - 1) * size + size - 1;
+    printf("Sin paralelizar\n Primer resultado: %f\túltimo resultado: %f\tTiempo invertido: %f.\n", array2[1 * size + 1], array2[position], timeInvested);
+
+    printf("\n--------------------------------------\nAplicando método de manera paralela\n--------------------------------------\n");
+    omp_set_num_threads(threads);
+    gettimeofday(&start, NULL);
+
+    for (int k = 0; k < iterations; k++) {
+        #pragma omp parallel for collapse(2) shared(array1, array2, iterations, size)
+        for (int i = 1; i < (size - 1); i++) {
+            for (int j = 1; j < (size - 1); j++) {
+                array2[i * size + j] = array1[(i - 1) * size + j] + array1[(i + 1) * size + j] + array1[i * size + j - 1] + array1[i * size + j + 1];
+            }
+        }
+    }
+
+    gettimeofday(&end, NULL);
+    timeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                    end.tv_usec - start.tv_usec) / 1.e6;
+
+    position = (size - 1) * size + size - 1;
+    printf("Paralelizando\n Primer resultado: %f\túltimo resultado: %f\tTiempo invertido: %f.\n", array2[1 * size + 1], array2[position], timeInvested);
+
 }
 
 int main() {
