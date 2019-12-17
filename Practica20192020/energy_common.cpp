@@ -29,12 +29,11 @@ extern void writeLigandEnergies (char *filename, int nconformations, float *ener
 
 extern void fill_conformations (int n,float *conformations_x,float *conformations_y, float  *conformations_z, struct ligand_t ligando) {
 
-        for (int i=0;i<(n*ligando.nlig);i+=ligando.nlig)
-        {
-                        memcpy(conformations_x+i,ligando.lig_x,sizeof(float)*ligando.nlig);
-                        memcpy(conformations_y+i,ligando.lig_y,sizeof(float)*ligando.nlig);
-                        memcpy(conformations_z+i,ligando.lig_z,sizeof(float)*ligando.nlig);
-        }
+  for (int i=0;i<(n*ligando.nlig);i+=ligando.nlig) {
+    memcpy(conformations_x+i,ligando.lig_x,sizeof(float)*ligando.nlig);
+    memcpy(conformations_y+i,ligando.lig_y,sizeof(float)*ligando.nlig);
+    memcpy(conformations_z+i,ligando.lig_z,sizeof(float)*ligando.nlig);
+  }
 
 }
 

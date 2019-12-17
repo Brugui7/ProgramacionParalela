@@ -66,8 +66,17 @@ void forces_GPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
 */
 __device__ __host__ extern float calculaDistancia (float rx, float ry, float rz, float lx, float ly, float lz) {
 
-  return 0; 
+  float difx = rx - lx;
+  float dify = ry - ly;
+  float difz = rz - lz;
+  float mod2x=difx*difx;
+  float mod2y=dify*dify;
+  float mod2z=difz*difz;
+  difx=mod2x+mod2y+mod2z;
+  return sqrtf(difx);
 }
+
+
 
 
 /**
@@ -75,7 +84,7 @@ __device__ __host__ extern float calculaDistancia (float rx, float ry, float rz,
  */
 void forces_CPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec_y, float *rec_z, float *lig_x, float *lig_y, float *lig_z, float *ql ,float *qr, float *energy, int nconformations){
 
-	float dist, total_elec = 0, miatomo[3], elecTerm;
+	double dist, total_elec = 0, miatomo[3], elecTerm;
   int totalAtomLig = nconformations * nlig;
 
 	for (int k=0; k < totalAtomLig; k+=nlig){
@@ -87,8 +96,10 @@ void forces_CPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
 			for(int j=0;j<atoms_r;j++){				
 				elecTerm = 0;
         dist=calculaDistancia (rec_x[j], rec_y[j], rec_z[j], miatomo[0], miatomo[1], miatomo[2]);
-				elecTerm = (ql[i]* qr[j]) / dist;
+//				printf ("La distancia es %lf\n", dist);
+        elecTerm = (ql[i]* qr[j]) / dist;
 				total_elec += elecTerm;
+//        printf ("La carga es %lf\n", total_elec);
 			}
 		}
 		
