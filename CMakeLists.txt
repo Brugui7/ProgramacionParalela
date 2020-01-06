@@ -5,4 +5,4 @@ find_package(OpenMP)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(ProgramacionParalela OpenMPExercises/firstPart/ThirdPart.c)
+add_executable(ProgramacionParalela OpenMPExercises/firstPart/ThirdPart.c CUDAExercises)
