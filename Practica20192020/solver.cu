@@ -32,10 +32,115 @@ void forces_GPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
 
 	//creamos memoria para los vectores para GPU _d (device)
 	float *rec_x_d, *rec_y_d, *rec_z_d, *qr_d, *lig_x_d, *lig_y_d, *lig_z_d, *ql_d, *energy_d;
+	int memSizeRec = sizeof(float) * atoms_r;
+	int memSizeLig = sizeof(float) * nlig * nconformations;
+	int memSizeQl = sizeof(float) * nlig;
 
-	//reservamos memoria para GPU
+    // ############ REC ############
+    cudaStatus = cudaMalloc((void**)&rec_x_d, memSizeRec);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al reservar memoria en la GPU para rec_x_d\n");
+        return;
+    }
+
+    cudaStatus = cudaMalloc((void**)&rec_y_d, memSizeRec);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al reservar memoria en la GPU para rec_y_d\n");
+        return;
+    }
+
+    cudaStatus = cudaMalloc((void**)&rec_z_d, memSizeRec);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al reservar memoria en la GPU para rec_z_d\n");
+        return;
+    }
+
+    cudaStatus = cudaMalloc((void**)&qr_d, memSizeRec);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al reservar memoria en la GPU para qr_d\n");
+        return;
+    }
+
+    // ############ LIG ############
+    cudaStatus = cudaMalloc((void**)&ql_d, memSizeQl);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al reservar memoria en la GPU para ql\n");
+        return;
+    }
+
+    cudaStatus = cudaMalloc((void**)&lig_x_d, memSizeLig);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al reservar memoria en la GPU para lig_x_d\n");
+        return;
+    }
+
+    cudaStatus = cudaMalloc((void**)&lig_y_d, memSizeLig);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al reservar memoria en la GPU para lig_y_d\n");
+        return;
+    }
+
+    cudaStatus = cudaMalloc((void**)&lig_z_d, memSizeLig);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al reservar memoria en la GPU para lig_z_d\n");
+        return;
+    }
+
 
 	//pasamos datos de host to device
+
+    // ############ REC ############
+    cudaStatus = cudaMemcpy(qr_d, qr, memSizeRec, cudaMemcpyHostToDevice);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información HtD de qr\n");
+        return;
+    }
+
+    cudaStatus = cudaMemcpy(rec_x_d, rec_x, memSizeRec, cudaMemcpyHostToDevice);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información HtD de rec_x\n");
+        return;
+    }
+
+    cudaStatus = cudaMemcpy(rec_y_d, rec_y, memSizeRec, cudaMemcpyHostToDevice);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información HtD de rec_y\n");
+        return;
+    }
+
+    cudaStatus = cudaMemcpy(rec_z_d, rec_z, memSizeRec, cudaMemcpyHostToDevice);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información HtD de rec_z\n");
+        return;
+    }
+
+
+    // ############ LIG ############
+
+
+    cudaStatus = cudaMemcpy(ql_d, ql, memSizeQl, cudaMemcpyHostToDevice);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información HtD de ql\n");
+        return;
+    }
+
+    cudaStatus = cudaMemcpy(lig_x_d, lig_x, memSizeLig, cudaMemcpyHostToDevice);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información HtD de lig_x\n");
+        return;
+    }
+
+    cudaStatus = cudaMemcpy(lig_y_d, lig_y, memSizeLig, cudaMemcpyHostToDevice);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información HtD de lig_y\n");
+        return;
+    }
+
+    cudaStatus = cudaMemcpy(lig_z_d, lig_z, memSizeLig, cudaMemcpyHostToDevice);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información HtD de lig_z\n");
+        return;
+    }
 	
 	//Definir numero de hilos y bloques
 	//printf("bloques: %d\n", (int)ceil(total_hilos/hilos_bloque)+1);
