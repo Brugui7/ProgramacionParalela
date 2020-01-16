@@ -11,8 +11,22 @@
 using namespace std;
 
 /**
-* Kernel del calculo de la solvation. Se debe anadir los parametros
-*/
+ * Solvation calculation kernel
+ * @param atoms_r
+ * @param atoms_l
+ * @param nlig
+ * @param rec_x_d
+ * @param rec_y_d
+ * @param rec_z_d
+ * @param lig_x_d
+ * @param lig_y_d
+ * @param lig_z_d
+ * @param ql_d
+ * @param qr_d
+ * @param energy_d
+ * @param nconformations
+ * @return
+ */
 __global__ void escalculation (int atoms_r, int atoms_l, int nlig, float *rec_x_d, float *rec_y_d, float *rec_z_d, float *lig_x_d, float *lig_y_d, float *lig_z_d, float *ql_d,float *qr_d, float *energy_d, int nconformations){
     int atomsLIdx = blockIdx.x * blockDim.x + threadIdx.x; // row
     int atomsRIdx = blockIdx.y * blockDim.y + threadIdx.y; // col
@@ -21,13 +35,12 @@ __global__ void escalculation (int atoms_r, int atoms_l, int nlig, float *rec_x_
 
     int totalAtomLig = nconformations * nlig;
 
-    if (atomsRIdx < atoms_r && atomsLIdx < atoms_l){
+    if (atomsLIdx < atoms_l && atomsRIdx < atoms_r){
         for (int i = 0; i < totalAtomLig; i += nlig) {
             miatomo[0] = *(lig_x_d + i + atomsLIdx);
             miatomo[1] = *(lig_y_d + i + atomsLIdx);
             miatomo[2] = *(lig_z_d + i + atomsLIdx);
 
-            //elecTerm = 0;
             dist = calculaDistancia(rec_x_d[atomsRIdx], rec_y_d[atomsRIdx], rec_z_d[atomsRIdx], miatomo[0], miatomo[1], miatomo[2]);
             //__syncthreads();
             //energy_d[i / nlig] += (ql_d[atomsLIdx] * qr_d[atomsRIdx]) / dist;
@@ -172,7 +185,7 @@ void forces_GPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
 
 	//Defines threads and blocks numbers
 	int xBlockSize = 16;
-    int yBlockSize = 1;
+    int yBlockSize = 16;
     int threadsPerBlock = xBlockSize * yBlockSize;
 
     dim3 block(ceil(atoms_l / xBlockSize), ceil(atoms_r / yBlockSize));
@@ -242,7 +255,7 @@ __device__ __host__ extern float calculaDistancia (float rx, float ry, float rz,
 void forces_CPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec_y, float *rec_z, float *lig_x, float *lig_y, float *lig_z, float *ql ,float *qr, float *energy, int nconformations){
 
 	double dist, total_elec = 0, miatomo[3], elecTerm;
-  int totalAtomLig = nconformations * nlig;
+    int totalAtomLig = nconformations * nlig;
 
 	for (int k=0; k < totalAtomLig; k+=nlig){
 	  for(int i=0;i<atoms_l;i++){
@@ -294,8 +307,8 @@ extern void solver_AU(int mode, int atoms_r, int atoms_l,  int nlig, float *rec_
 			break;
 		case 2: //CUDA exeuction
 			printf("\* CALCULO ELECTROSTATICO EN CUDA *\n");
-      printf("**************************************\n");
-      printf("Conformaciones: %d\t Mode: %d, GPU\n",nconformaciones,mode);
+            printf("**************************************\n");
+            printf("Conformaciones: %d\t Mode: %d, GPU\n",nconformaciones,mode);
 			elapsed_i = wtime();
 			forces_GPU_AU (atoms_r,atoms_l,nlig,rec_x,rec_y,rec_z,lig_x,lig_y,lig_z,ql,qr,energy_desolv,nconformaciones);
 			elapsed_o = wtime() - elapsed_i;
