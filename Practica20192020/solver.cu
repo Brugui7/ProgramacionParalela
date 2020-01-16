@@ -21,8 +21,7 @@ __global__ void escalculation (int atoms_r, int atoms_l, int nlig, float *rec_x_
 
     int totalAtomLig = nconformations * nlig;
 
-
-	if (atomsRIdx < atoms_r && atomsLIdx < atoms_l){
+    if (atomsRIdx < atoms_r && atomsLIdx < atoms_l){
         for (int i = 0; i < totalAtomLig; i += nlig) {
             miatomo[0] = *(lig_x_d + i + atomsLIdx);
             miatomo[1] = *(lig_y_d + i + atomsLIdx);
@@ -30,10 +29,9 @@ __global__ void escalculation (int atoms_r, int atoms_l, int nlig, float *rec_x_
 
             //elecTerm = 0;
             dist = calculaDistancia(rec_x_d[atomsRIdx], rec_y_d[atomsRIdx], rec_z_d[atomsRIdx], miatomo[0], miatomo[1], miatomo[2]);
-            energy_d[i / nlig] += (ql_d[atomsLIdx] * qr_d[atomsRIdx]) / dist;
-            if(energy_d[i / nlig] == -0.001414f){
-                printf("vaya qué bien");
-            }
+            //__syncthreads();
+            //energy_d[i / nlig] += (ql_d[atomsLIdx] * qr_d[atomsRIdx]) / dist;
+            atomicAdd(&energy_d[i / nlig], (ql_d[atomsLIdx] * qr_d[atomsRIdx]) / dist);
 
         }
 
@@ -253,7 +251,8 @@ void forces_CPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
 			miatomo[2] = *(lig_z + k + i);
 
 			for(int j=0;j<atoms_r;j++){
-				elecTerm = 0;
+                printf("i %d\tj %d\n", i, j);
+                elecTerm = 0;
         dist=calculaDistancia (rec_x[j], rec_y[j], rec_z[j], miatomo[0], miatomo[1], miatomo[2]);
 //				printf ("La distancia es %lf\n", dist);
         elecTerm = (ql[i]* qr[j]) / dist;
