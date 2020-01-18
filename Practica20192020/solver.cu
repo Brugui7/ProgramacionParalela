@@ -184,11 +184,11 @@ void forces_GPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
     }
 
 	//Defines threads and blocks numbers
-	int xBlockSize = 16;
-    int yBlockSize = 16;
+	int xBlockSize = 1;
+    int yBlockSize = 256;
     int threadsPerBlock = xBlockSize * yBlockSize;
 
-    dim3 block(ceil(atoms_l / xBlockSize), ceil(atoms_r / yBlockSize));
+    dim3 block(ceil((atoms_l + xBlockSize - 1) / xBlockSize), ceil((atoms_r + yBlockSize - 1) / yBlockSize));
     dim3 thread(xBlockSize, yBlockSize);
 
 	printf("Bloques x: %d\n", xBlockSize);
