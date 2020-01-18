@@ -184,7 +184,7 @@ void forces_GPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
     }
 
 	//Defines threads and blocks numbers
-	int xBlockSize = 1;
+	int xBlockSize = 4;
     int yBlockSize = 256;
     int threadsPerBlock = xBlockSize * yBlockSize;
 
