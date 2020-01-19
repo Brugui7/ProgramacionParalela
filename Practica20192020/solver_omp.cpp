@@ -17,9 +17,8 @@ forces_OMP_AU(int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec_y, fl
     //printf(" En el fichero solver_omp.cpp se encuentra la funcion forces_omp_au que se debe implementar con la version OpenMP\n");
     float dist, total_elec = 0, miatomo[3], elecTerm;
     int totalAtomLig = nconformations * nlig;
-    int totalArrayReadsWrites = 0;
 
-    omp_set_num_threads(8);
+    omp_set_num_threads(12);
     #pragma omp parallel for shared(nlig, atoms_l, atoms_r, totalAtomLig) private(dist, elecTerm, total_elec, miatomo)
     for (int k = 0; k < totalAtomLig; k += nlig) {
         #pragma omp parallel for firstprivate(k) private(miatomo) shared(atoms_l)
@@ -28,17 +27,14 @@ forces_OMP_AU(int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec_y, fl
             miatomo[1] = *(lig_y + k + i);
             miatomo[2] = *(lig_z + k + i);
             //3 escrituras
-            totalArrayReadsWrites += 3;
 
             for (int j = 0; j < atoms_r; j++) {
                 elecTerm = 0;
                 dist = calculaDistancia(rec_x[j], rec_y[j], rec_z[j], miatomo[0], miatomo[1], miatomo[2]);
                 //6 reads
-                totalArrayReadsWrites += 6;
 
                 elecTerm = (ql[i] * qr[j]) / dist;
                 //2 reads
-                totalArrayReadsWrites += 2;
 
                 total_elec += elecTerm;
             }
@@ -46,12 +42,10 @@ forces_OMP_AU(int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec_y, fl
         energy[k / nlig] = total_elec;
 
         //1 read
-        totalArrayReadsWrites++;
 
         total_elec = 0;
     }
     printf("Termino electrostatico %f\n", energy[0]);
-    printf("Total lecturas + escrituras\t %d\n", totalArrayReadsWrites);
 }
 
 

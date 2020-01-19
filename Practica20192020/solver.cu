@@ -54,8 +54,21 @@ __global__ void escalculation (int atoms_r, int atoms_l, int nlig, float *rec_x_
 
 
 /**
-* Funcion para manejar el lanzamiento de CUDA
-*/
+ *
+ * @param atoms_r
+ * @param atoms_l
+ * @param nlig
+ * @param rec_x
+ * @param rec_y
+ * @param rec_z
+ * @param lig_x
+ * @param lig_y
+ * @param lig_z
+ * @param ql
+ * @param qr
+ * @param energy
+ * @param nconformations
+ */
 void forces_GPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec_y, float *rec_z, float *lig_x, float *lig_y, float *lig_z, float *ql ,float *qr, float *energy, int nconformations){
 
 	cudaError_t cudaStatus; //variable para recoger estados de cuda
@@ -65,10 +78,19 @@ void forces_GPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
 
 	//creamos memoria para los vectores para GPU _d (device)
 	float *rec_x_d, *rec_y_d, *rec_z_d, *qr_d, *lig_x_d, *lig_y_d, *lig_z_d, *ql_d, *energy_d;
+
+	//Size variables
 	int memSizeRec      = sizeof(float) * atoms_r;
 	int memSizeLig      = sizeof(float) * nlig * nconformations;
 	int memSizeQl       = sizeof(float) * nlig;
     int memSizeEnergy   = sizeof(float) * nconformations;
+
+    //Time measuring variables
+    struct timeval start, end;
+    double kernelTimeInvested, transferHtDTime, transferDtHTime;
+
+
+
 
     cudaStatus = cudaMalloc((void**)&energy_d, memSizeEnergy);
     if (cudaStatus != cudaSuccess){
@@ -125,6 +147,9 @@ void forces_GPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
         fprintf(stderr, "Error al reservar memoria en la GPU para lig_z_d\n");
         return;
     }
+
+    gettimeofday(&start, NULL);
+
 
 	//Pass data to the device
 	cudaStatus = cudaMemcpy(energy_d, energy, memSizeEnergy, cudaMemcpyHostToDevice);
@@ -183,6 +208,11 @@ void forces_GPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
         return;
     }
 
+    gettimeofday(&end, NULL);
+    transferHtDTime = ((end.tv_sec - start.tv_sec) * 1000000u +
+                    end.tv_usec - start.tv_usec) / 1.e6;
+
+
 	//Defines threads and blocks numbers
 	int xBlockSize = 4;
     int yBlockSize = 256;
@@ -194,14 +224,22 @@ void forces_GPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
 	printf("Bloques x: %d\n", xBlockSize);
 	printf("Bloques y: %d\n", yBlockSize);
 	printf("Hilos por bloque: %d\n", threadsPerBlock);
+    gettimeofday(&start, NULL);
 
 	//llamamos a kernel
 	escalculation <<< block,thread >>> (atoms_r, atoms_l, nlig, rec_x_d, rec_y_d, rec_z_d, lig_x_d, lig_y_d, lig_z_d, ql_d, qr_d, energy_d, nconformations);
 
 	//control de errores kernel
 	cudaDeviceSynchronize();
+
+    gettimeofday(&end, NULL);
+    kernelTimeInvested = ((end.tv_sec - start.tv_sec) * 1000000u +
+                       end.tv_usec - start.tv_usec) / 1.e6;
+
 	cudaStatus = cudaGetLastError();
 	if(cudaStatus != cudaSuccess) fprintf(stderr, "Error en el kernel %d\n", cudaStatus);
+
+    gettimeofday(&start, NULL);
 
 	//Gets the result back to the host
     cudaStatus = cudaMemcpy(energy, energy_d, memSizeEnergy, cudaMemcpyDeviceToHost);
@@ -210,12 +248,70 @@ void forces_GPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
         return;
     }
 
-	// para comprobar que la ultima conformacion tiene el mismo resultado que la primera
+    // ############ REC ############
+    cudaStatus = cudaMemcpy(qr, qr_d, memSizeRec, cudaMemcpyDeviceToHost);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información DtH de qr\n");
+        return;
+    }
+
+    cudaStatus = cudaMemcpy(rec_x, rec_x_d, memSizeRec, cudaMemcpyDeviceToHost);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información DtH de rec_x\n");
+        return;
+    }
+
+    cudaStatus = cudaMemcpy(rec_y, rec_y_d, memSizeRec, cudaMemcpyDeviceToHost);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información DtH de rec_y\n");
+        return;
+    }
+
+    cudaStatus = cudaMemcpy(rec_z, rec_z_d, memSizeRec, cudaMemcpyDeviceToHost);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información DtH de rec_z\n");
+        return;
+    }
+
+    // ############ LIG ############
+    cudaStatus = cudaMemcpy(ql, ql_d, memSizeQl, cudaMemcpyDeviceToHost);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información DtH de ql\n");
+        return;
+    }
+
+    cudaStatus = cudaMemcpy(lig_x, lig_x_d, memSizeLig, cudaMemcpyDeviceToHost);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información DtH de lig_x\n");
+        return;
+    }
+
+    cudaStatus = cudaMemcpy(lig_y, lig_y_d, memSizeLig, cudaMemcpyDeviceToHost);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información DtH de lig_y\n");
+        return;
+    }
+
+    cudaStatus = cudaMemcpy(lig_z, lig_z_d, memSizeLig, cudaMemcpyDeviceToHost);
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "Error al transferir información DtH de lig_z\n");
+        return;
+    }
+
+    gettimeofday(&end, NULL);
+    transferDtHTime = ((end.tv_sec - start.tv_sec) * 1000000u +
+                          end.tv_usec - start.tv_usec) / 1.e6;
+
+
+    // para comprobar que la ultima conformacion tiene el mismo resultado que la primera
 	printf("Termino electrostatico de conformacion %d es: %f\n", nconformations-1, energy[nconformations-1]);
 
 	//resultado varia repecto a SECUENCIAL y CUDA en 0.000002 por falta de precision con float
 	//posible solucion utilizar double, probablemente bajara el rendimiento -> mas tiempo para calculo
 	printf("Termino electrostatico %f\n", energy[0]);
+	printf("Tiempo transferencia HtD %f\n", transferHtDTime);
+	printf("Tiempo cómputo %f\n", kernelTimeInvested);
+	printf("Tiempo transferencia DtH %f\n", transferDtHTime);
 
 	//Liberamos memoria reservada para GPU
 	cudaFree(rec_x_d);
@@ -264,7 +360,6 @@ void forces_CPU_AU (int atoms_r, int atoms_l, int nlig, float *rec_x, float *rec
 			miatomo[2] = *(lig_z + k + i);
 
 			for(int j=0;j<atoms_r;j++){
-                printf("i %d\tj %d\n", i, j);
                 elecTerm = 0;
         dist=calculaDistancia (rec_x[j], rec_y[j], rec_z[j], miatomo[0], miatomo[1], miatomo[2]);
 //				printf ("La distancia es %lf\n", dist);
