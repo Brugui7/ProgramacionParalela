@@ -5,8 +5,24 @@
 
 
 __global__ void arrayReduction(float *d_array, float *d_result){
-    int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    if (tid < N) d_result[0] += d_array[tid];
+    /*
+     * No funciona
+    extern __shared__ int sum[];
+    unsigned int tid = threadIdx.x;
+    unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+    sum[tid] = d_array[i];
+    __syncthreads();
+
+    for (int s = 1; s < blockDim.x; s *= 2) {
+        if (tid % (2*s) == 0){
+            sum[tid] += sum[tid + s];
+        }
+        __syncthreads();
+    }
+
+    if (tid == 0) d_result[blockIdx.x] = sum[0];*/
+    int id = blockIdx.x * blockDim.x + threadIdx.x;
+    if (id < N) atomicAdd(&d_result[0], d_array[id]);
 }
 int main() {
     float *h_array, *h_result;
