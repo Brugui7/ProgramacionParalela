@@ -1,36 +1,31 @@
+/**
+ * @author Alejandro Brugarolas
+ * @since 2019-12
+ */
 #include <stdlib.h>
 #include <stdio.h>
 #include <cuda_runtime.h>
 #define N 1024
 
 
-__global__ void arrayReduction(float *d_array, float *d_result){
-    /*
-     * No funciona
-    extern __shared__ int sum[];
-    unsigned int tid = threadIdx.x;
-    unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
-    sum[tid] = d_array[i];
-    __syncthreads();
+__global__ void arrayReduction(float *d_array){
+    int idx = threadIdx.x;
+    int idx2 = 0;
 
-    for (int s = 1; s < blockDim.x; s *= 2) {
-        if (tid % (2*s) == 0){
-            sum[tid] += sum[tid + s];
+    for (int i = blockDim.x; i >= 1 ; i /=2) {
+        if (idx < i){
+            idx2 = idx + i;
+            d_array[idx] += d_array[idx2];
         }
         __syncthreads();
     }
-
-    if (tid == 0) d_result[blockIdx.x] = sum[0];*/
-    int id = blockIdx.x * blockDim.x + threadIdx.x;
-    if (id < N) atomicAdd(&d_result[0], d_array[id]);
 }
 int main() {
-    float *h_array, *h_result;
-    float *d_array, *d_result;
+    float *h_array;
+    float *d_array;
     int memSize = sizeof(float) * N;
 
     h_array = (float*) malloc(memSize);
-    h_result = (float*) malloc(sizeof(float));
 
     cudaError_t error;
     error = cudaMalloc((void**)&d_array, memSize);
@@ -39,13 +34,8 @@ int main() {
         return -1;
     }
 
-    error = cudaMalloc((void**)&d_result, sizeof(float));
-    if (error != cudaSuccess){
-        fprintf(stderr, "Error al reservar memoria");
-        return -1;
-    }
 
-    //Fills the arrays
+    //Fills the array
     for (int i = 0; i < N; ++i) {
         h_array[i] = 1.0f;
     }
@@ -55,18 +45,15 @@ int main() {
     if (error != cudaSuccess){
         fprintf(stderr, "Error al transferir información.");
     }
-    error = cudaMemcpy(d_result, h_result, sizeof(float), cudaMemcpyHostToDevice);
-    if (error != cudaSuccess){
-        fprintf(stderr, "Error al transferir información.");
-    }
 
-    dim3 block (N/256);
-    dim3 thread (256);
+    dim3 block (N / (N/2));
+    dim3 thread (N/2);
 
-    arrayReduction<<<block, thread>>>(d_array, d_result);
+    arrayReduction<<<block, thread>>>(d_array);
 
-    cudaMemcpy(h_result, d_result, sizeof(float), cudaMemcpyDeviceToHost);
-    printf("El resultado es: %f\n", h_result[0]);
+    cudaMemcpy(h_array, d_array, sizeof(float), cudaMemcpyDeviceToHost);
+
+    printf("El resultado es: %f\n", h_array[0]);
 
     cudaFree(d_array);
 
